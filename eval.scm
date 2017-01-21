@@ -59,6 +59,11 @@
 (define (if-alternative exp) (cadddr exp))
 (define (make-if pred conseq alt) (list 'if pred conseq alt))
 
+;; ==== QUESTION 2 ====
+(define (and? exp) (tagged-list? exp 'and))
+(define (and-clauses exp) (cdr exp))
+;; ==== END QUES 2 ====
+
 (define (cond? exp) (tagged-list? exp 'cond))
 (define (cond-clauses exp) (cdr exp))
 (define first-cond-clause car)
@@ -504,27 +509,35 @@
 
 ;; ==== QUESTION 2 ====
 
-(define (and? exp) (tagged-list? exp 'and))
-(define (and-clauses exp) (cdr exp))
 (define (eval-and exp env)
-  (define clauses (and-clauses exp))
+  (eval-and-helper (and-clauses exp) env))
+(define (eval-and-helper clauses env)
   (cond ((null? clauses) #t)
-        ((null? (cdr clauses)) (car clauses))
+        ((null? (cdr clauses)) (m-eval (car clauses) env))
         (else (if (m-eval (car clauses) env)
-                  (eval-and (cdr clauses) env)
+                  (eval-and-helper (cdr clauses) env)
                   #f)))
   )
 
 (test-case
  "and special form"
  (define the-test-env (setup-environment))
- (check-true (m-eval '(and) the-test-env))
- (check-true (m-eval '(and 121241421 1231241 12212) the-test-env))
+ (check-true (m-eval '(and) the-test-env)
+             "and with 0 args gives #t")
+ (check-equal? '() (m-eval '(and '()) the-test-env)
+               "and with 1 arg gives the arg, not necessarily bool")
+ (check-false (m-eval '(and #f) the-test-env)
+              "and with #f gives #f")
+ (check-equal? 12212 (m-eval '(and 121241421 1231241 12212) the-test-env)
+               "if no arg evaluates to #f, and gives last arg")
+ (check-equal? 7 (m-eval '(and (+ 3 4)) the-test-env)
+               "and returns *result* of last arg if true")
  (check-true (m-eval '(and #t #t #t #t) the-test-env))
  (check-true (m-eval '(and #t #t (quote foo) #t) the-test-env))
  (check-false (m-eval '(and #t #t #t #f) the-test-env))
  (check-true (m-eval '(and (< 1 2) (= 5 5)) the-test-env))
- (check-false (m-eval '(and (< 1 2) (= 5 5) (> 4 5)) the-test-env))
+ (check-false (m-eval '(and (< 1 2) (= 5 5) (> 4 5)) the-test-env)
+              "and returns *result* of evaluating last arg if it's #f")
 
  ;; if we defined a procedure "and", we wouldn't get short circuiting, BAD
  (m-eval '(define (counter n)
