@@ -475,4 +475,25 @@
  (check-print "Hello\n world 3333" '(printf "Hello\n world ~a" 3333))
  )
 
+;; ==== QUESTION 2 ====
+
+(test-case
+ "and special form"
+ (define the-test-env (setup-environment))
+ (check-true (m-eval '(and) the-test-env))
+ (check-true (m-eval '(121241421 1231241 12212) the-test-env))
+ (check-true (m-eval '(and #t #t #t #t) the-test-env))
+ (check-true (m-eval '(and #t #t (quote foo) #t) the-test-env))
+ (check-false (m-eval '(and #t #t #t #f) the-test-env))
+
+ (m-eval '(define (counter n)
+  (lambda ()
+    (set! n (+ n 1))
+    n)) the-test-env)
+ (m-eval '(define ctr (counter 0)) the-test-env)
+ (check-false (m-eval '(and #f (ctr)) the-test-env))
+ (check-equal? 1 (m-eval '(ctr) the-test-env)
+               "and should short-circuit")
+ )
+
 (display "Done running tests.")(newline)
