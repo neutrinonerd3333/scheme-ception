@@ -522,22 +522,38 @@
 (test-case
  "and special form"
  (define the-test-env (setup-environment))
+
+ ;; partitions
+ ;; num args: 0, 1, >1
+ ;; return value: #f, #t, other stuff
+ ;; last value is deciding?
+ ;; subexpressions?
+
  (check-true (m-eval '(and) the-test-env)
              "and with 0 args gives #t")
+ (check-true (m-eval '(and #t) the-test-env)
+             "(and #t) = #t")
+ (check-false (m-eval '(and #f) the-test-env)
+              "(and #f) = #f")
  (check-equal? '() (m-eval '(and '()) the-test-env)
                "and with 1 arg gives the arg, not necessarily bool")
- (check-false (m-eval '(and #f) the-test-env)
-              "and with #f gives #f")
+
+ (check-true (m-eval '(and #t #t #t #t) the-test-env))
+ (check-true (m-eval '(and #t #t (quote foo) #t) the-test-env))
+ (check-false (m-eval '(and #t #t #t #f) the-test-env))
+
+ ;; more involved
  (check-equal? 12212 (m-eval '(and 121241421 1231241 12212) the-test-env)
                "if no arg evaluates to #f, and gives last arg")
  (check-equal? 7 (m-eval '(and (+ 3 4)) the-test-env)
                "and returns *result* of last arg if true")
- (check-true (m-eval '(and #t #t #t #t) the-test-env))
- (check-true (m-eval '(and #t #t (quote foo) #t) the-test-env))
- (check-false (m-eval '(and #t #t #t #f) the-test-env))
- (check-true (m-eval '(and (< 1 2) (= 5 5)) the-test-env))
  (check-false (m-eval '(and (< 1 2) (= 5 5) (> 4 5)) the-test-env)
               "and returns *result* of evaluating last arg if it's #f")
+ (check-true (m-eval '(and (< 1 2) (= 5 5)) the-test-env))
+
+ (m-eval '(define x -123) the-test-env)
+ (check-true (m-eval '(and (< x 4) (= 5 5) (null? '())) the-test-env)
+             "and should be ok with variables in clauses")
 
  ;; if we defined a procedure "and", we wouldn't get short circuiting, BAD
  (m-eval '(define (counter n)
