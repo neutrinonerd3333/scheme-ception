@@ -485,7 +485,10 @@
  (check-true (m-eval '(and #t #t #t #t) the-test-env))
  (check-true (m-eval '(and #t #t (quote foo) #t) the-test-env))
  (check-false (m-eval '(and #t #t #t #f) the-test-env))
+ (check-true (m-eval '(and (< 1 2) (= 5 5)) the-test-env))
+ (check-false (m-eval '(and (< 1 2) (= 5 5) (> 4 5)) the-test-env))
 
+ ;; if we defined a procedure "and", we wouldn't get short circuiting, BAD
  (m-eval '(define (counter n)
   (lambda ()
     (set! n (+ n 1))
