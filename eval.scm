@@ -344,6 +344,21 @@
         (list '= =)
         (list 'display display)
         (list 'not not)
+
+        ;; ===== QUESTION 1 =====
+        (list '* *)
+        (list '/ /)
+        (list 'list list)
+        (list 'cadr cadr)
+        (list 'cddr cddr)
+        (list 'newline newline)
+        (list 'printf printf)
+        (list 'length length)
+        (list 'first first)
+        (list 'second second)
+        (list 'third third)
+        (list 'fourth fourth)
+        (list 'rest rest)
         ; ... more primitives
         ))
 
@@ -413,3 +428,51 @@
   ;; Update the meval-depth variable inside the environment we're simulating
   (set-variable-value! 'meval-depth (+ meval-depth 1) the-global-environment)
   'loaded)
+
+
+;; the fun begins!
+(require rackunit)
+(define test-global-env (setup-environment))
+
+;; ==== QUESTION 1 ====
+
+(test-case
+ "new primitives"
+ (check-equal? 5 (m-eval '(/ 15 3) test-global-env)
+               "Division should work!")
+ (check-equal? 221 (m-eval '(* 13 17) test-global-env)
+               "Multiplication should work!")
+ (check-equal? (list 'foo 'bar 'baz) (m-eval (quote (list 'foo 'bar 'baz)) test-global-env)
+               "List primitive should work")
+ (check-equal? 23 (m-eval '(cadr (list 19 23 29)) test-global-env)
+               "cadr primitive should work")
+ (check-equal? '(29) (m-eval '(cddr (list 19 23 29)) test-global-env)
+               "cddr primitive should work")
+ (check-equal? 3 (m-eval '(length (list 19 23 29)) test-global-env)
+               "length primitive should work")
+ (check-equal? 19 (m-eval '(first (list 19 23 29)) test-global-env)
+               "first primitive should work")
+ (check-equal? 23 (m-eval '(second (list 19 23 29)) test-global-env)
+               "second primitive should work")
+ (check-equal? 29 (m-eval '(third (list 19 23 29)) test-global-env)
+               "third primitive should work")
+ (check-equal? 31 (m-eval '(fourth (list 19 23 29 31)) test-global-env)
+               "fourth primitive should work")
+ (check-equal? '(23 29 31) (m-eval '(rest (list 19 23 29 31)) test-global-env)
+               "rest primitive should work")
+ )
+
+(test-case
+ "Printing primitives"
+ (define test-print-env (setup-environment))
+ (define (check-print str exp)
+  (define out (open-output-string))
+  (parameterize ((current-output-port out))
+    (m-eval exp test-print-env))
+  (check-equal? str (get-output-string out)))
+
+ (check-print "\n" '(newline))
+ (check-print "Hello\n world 3333" '(printf "Hello\n world ~a" 3333))
+ )
+
+(display "Done running tests.")(newline)
