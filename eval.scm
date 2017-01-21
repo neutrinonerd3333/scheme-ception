@@ -105,6 +105,9 @@
         ((assignment? exp) (eval-assignment exp env))
         ((definition? exp) (eval-definition exp env))
         ((if? exp) (eval-if exp env))
+        ;; ==== QUESTION 2 ====
+        ((and? exp) (eval-and exp env))
+        ;; ==== END QUES 2 ====
         ((lambda? exp)
          (make-procedure (lambda-parameters exp) (lambda-body exp) env))
         ((begin? exp) (eval-sequence (begin-actions exp) env))
@@ -430,9 +433,32 @@
   'loaded)
 
 
-;; the fun begins!
+;;
+;;                       _oo0oo_
+;;                      o8888888o
+;;                      88" . "88
+;;                      (| -_- |)
+;;                      0\  =  /0
+;;                    ___/`---'\___
+;;                  .' \\|     |// '.
+;;                 / \\|||  :  |||// \
+;;                / _||||| -:- |||||- \
+;;               |   | \\\  -  /// |   |
+;;               | \_|  ''\---/''  |_/ |
+;;               \  .-\__  '-'  ___/-. /
+;;             ___'. .'  /--.--\  `. .'___
+;;          ."" '<  `.___\_<|>_/___.' >' "".
+;;         | | :  `- \`.;`\ _ /`;.`/ - ` : | |
+;;         \  \ `_.   \_ __\ /__ _/   .-` /  /
+;;     =====`-.____`.___ \_____/___.-`___.-'=====
+;;                       `=---='
+;;
+;;    This code protected from bugs by code Buddha
+;;
+
 (require rackunit)
 (define test-global-env (setup-environment))
+
 
 ;; ==== QUESTION 1 ====
 
@@ -475,13 +501,25 @@
  (check-print "Hello\n world 3333" '(printf "Hello\n world ~a" 3333))
  )
 
+
 ;; ==== QUESTION 2 ====
+
+(define (and? exp) (tagged-list? exp 'and))
+(define (and-clauses exp) (cdr exp))
+(define (eval-and exp env)
+  (define clauses (and-clauses exp))
+  (cond ((null? clauses) #t)
+        ((null? (cdr clauses)) (car clauses))
+        (else (if (m-eval (car clauses) env)
+                  (eval-and (cdr clauses) env)
+                  #f)))
+  )
 
 (test-case
  "and special form"
  (define the-test-env (setup-environment))
  (check-true (m-eval '(and) the-test-env))
- (check-true (m-eval '(121241421 1231241 12212) the-test-env))
+ (check-true (m-eval '(and 121241421 1231241 12212) the-test-env))
  (check-true (m-eval '(and #t #t #t #t) the-test-env))
  (check-true (m-eval '(and #t #t (quote foo) #t) the-test-env))
  (check-false (m-eval '(and #t #t #t #f) the-test-env))
