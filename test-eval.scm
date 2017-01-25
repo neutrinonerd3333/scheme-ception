@@ -209,7 +209,7 @@
   (check-equal? 83 (test-eval 'x)
     "unset! undoes last not-undone set! (not necessarily lest set!)")
 
-  (test-eval '(define f (lambda (t) (lambda () (set! t 131) (unset! t) t))))
+  (test-eval '(define f (lambda (x) (lambda () (set! x 131) (unset! x) x))))
   (check-equal? 405 (test-eval '((f 405)))
     "unset! should work in not-global environements")
   )

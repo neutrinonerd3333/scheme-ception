@@ -38,6 +38,11 @@
 (define (make-assignment var expr)
   (list 'set! var expr))
 
+;; ==== QUESTION 4 ====
+(define (unassignment? exp) (tagged-list? exp 'unset!))
+(define unassignment-variable cadr)
+;; ==== END QUES 4 ====
+
 (define (definition? exp) (tagged-list? exp 'define))
 (define (definition-variable exp)
   (if (symbol? (cadr exp))   (cadr exp)   (caadr exp)))
