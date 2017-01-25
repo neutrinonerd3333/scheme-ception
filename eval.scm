@@ -356,6 +356,8 @@
         ;; ===== QUESTION 1 =====
         (list '* *)
         (list '/ /)
+        (list '>= >=)
+        (list '<= <=)
         (list 'list list)
         (list 'cadr cadr)
         (list 'cddr cddr)
@@ -367,6 +369,7 @@
         (list 'third third)
         (list 'fourth fourth)
         (list 'rest rest)
+        (list 'void void)
         ; ... more primitives
         ))
 
@@ -462,35 +465,41 @@
 ;;
 
 (require rackunit)
-(define test-global-env (setup-environment))
-
+(define test-env (setup-environment))
+(define (test-eval exp) (m-eval exp test-env))
 
 ;; ==== QUESTION 1 ====
 
 (test-case
  "new primitives"
- (check-equal? 5 (m-eval '(/ 15 3) test-global-env)
-               "Division should work!")
- (check-equal? 221 (m-eval '(* 13 17) test-global-env)
-               "Multiplication should work!")
- (check-equal? (list 'foo 'bar 'baz) (m-eval (quote (list 'foo 'bar 'baz)) test-global-env)
-               "List primitive should work")
- (check-equal? 23 (m-eval '(cadr (list 19 23 29)) test-global-env)
-               "cadr primitive should work")
- (check-equal? '(29) (m-eval '(cddr (list 19 23 29)) test-global-env)
-               "cddr primitive should work")
- (check-equal? 3 (m-eval '(length (list 19 23 29)) test-global-env)
-               "length primitive should work")
- (check-equal? 19 (m-eval '(first (list 19 23 29)) test-global-env)
-               "first primitive should work")
- (check-equal? 23 (m-eval '(second (list 19 23 29)) test-global-env)
-               "second primitive should work")
- (check-equal? 29 (m-eval '(third (list 19 23 29)) test-global-env)
-               "third primitive should work")
- (check-equal? 31 (m-eval '(fourth (list 19 23 29 31)) test-global-env)
-               "fourth primitive should work")
- (check-equal? '(23 29 31) (m-eval '(rest (list 19 23 29 31)) test-global-env)
-               "rest primitive should work")
+ (check-equal? 5 (test-eval '(/ 15 3))
+               "/ primitive")
+ (check-equal? 221 (test-eval '(* 13 17))
+               "* primitive")
+ (check-true (test-eval '(>= 3 3))
+             ">= primitive")
+ (check-false (test-eval '(<= (+ 1 2) (- 9 100)))
+             "<= primitive")
+ (check-equal? (list 'foo 'bar 'baz) (test-eval (quote (list 'foo 'bar 'baz)))
+               "list primitive")
+ (check-equal? 23 (test-eval '(cadr (list 19 23 29)))
+               "cadr primitive")
+ (check-equal? '(29) (test-eval '(cddr (list 19 23 29)))
+               "cddr primitive")
+ (check-equal? 3 (test-eval '(length (list 19 23 29)))
+               "length primitive")
+ (check-equal? 19 (test-eval '(first (list 19 23 29)))
+               "first primitive")
+ (check-equal? 23 (test-eval '(second (list 19 23 29)))
+               "second primitive")
+ (check-equal? 29 (test-eval '(third (list 19 23 29)))
+               "third primitive")
+ (check-equal? 31 (test-eval '(fourth (list 19 23 29 31)))
+               "fourth primitive")
+ (check-equal? '(23 29 31) (test-eval '(rest (list 19 23 29 31)))
+               "rest primitive")
+ (check-equal? (void) (test-eval '(void 1 2 3 4 #t #f (quote sdfsfds)))
+               "void primitive")
  )
 
 (test-case
