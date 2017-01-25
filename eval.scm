@@ -77,6 +77,10 @@
 (define (make-let bindings body)
   (cons 'let (cons bindings body)))
 
+;; ==== QUESTION 3 ====
+(define (until? exp) (tagged-list? exp 'until))
+;; ==== END QUES 3 ====
+
 (define (begin? exp) (tagged-list? exp 'begin))
 (define (begin-actions begin-exp) (cdr begin-exp))
 (define (last-exp? seq) (null? (cdr seq)))
@@ -113,6 +117,9 @@
         ;; ==== QUESTION 2 ====
         ((and? exp) (eval-and exp env))
         ;; ==== END QUES 2 ====
+        ;; ==== QUESTION 3 ====
+        ((until? exp) (m-eval (until->let exp) env))
+        ;; ==== END QUES 3 ====
         ((lambda? exp)
          (make-procedure (lambda-parameters exp) (lambda-body exp) env))
         ((begin? exp) (eval-sequence (begin-actions exp) env))
@@ -578,7 +585,16 @@
 
 ;; ==== QUESTION 3 ====
 
-(define (until->let))
+(define until-exps cddr)
+(define until-test cadr)
+(define (until->let exp)
+  (define loop-sym (gensym))
+  `(let ()
+     (define (,loop-sym)
+      (if ,(until-test exp)
+          (void)
+          (begin ,@(until-exps exp) (,loop-sym))))
+     (,loop-sym)))
 
 (test-case
   "until special form"
