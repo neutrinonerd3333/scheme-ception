@@ -538,6 +538,7 @@
 (test-case
  "and special form"
  (define the-test-env (setup-environment))
+ (define (test-eval exp) (m-eval exp the-test-env))
 
  ;; partitions
  ;; num args: 0, 1, >1
@@ -545,30 +546,30 @@
  ;; last value is deciding?
  ;; subexpressions?
 
- (check-true (m-eval '(and) the-test-env)
+ (check-true (test-eval '(and))
              "and with 0 args gives #t")
- (check-true (m-eval '(and #t) the-test-env)
+ (check-true (test-eval '(and #t))
              "(and #t) = #t")
- (check-false (m-eval '(and #f) the-test-env)
+ (check-false (test-eval '(and #f))
               "(and #f) = #f")
- (check-equal? '() (m-eval '(and '()) the-test-env)
+ (check-equal? '() (test-eval '(and '()))
                "and with 1 arg gives the arg, not necessarily bool")
 
- (check-true (m-eval '(and #t #t #t #t) the-test-env))
- (check-true (m-eval '(and #t #t (quote foo) #t) the-test-env))
- (check-false (m-eval '(and #t #t #t #f) the-test-env))
+ (check-true (test-eval '(and #t #t #t #t)))
+ (check-true (test-eval '(and #t #t (quote foo) #t)))
+ (check-false (test-eval '(and #t #t #t #f)))
 
  ;; more involved
- (check-equal? 12212 (m-eval '(and 121241421 1231241 12212) the-test-env)
+ (check-equal? 12212 (test-eval '(and 121241421 1231241 12212))
                "if no arg evaluates to #f, and gives last arg")
- (check-equal? 7 (m-eval '(and (+ 3 4)) the-test-env)
+ (check-equal? 7 (test-eval '(and (+ 3 4)))
                "and returns *result* of last arg if true")
- (check-false (m-eval '(and (< 1 2) (= 5 5) (> 4 5)) the-test-env)
+ (check-false (test-eval '(and (< 1 2) (= 5 5) (> 4 5)))
               "and returns *result* of evaluating last arg if it's #f")
- (check-true (m-eval '(and (< 1 2) (+ 3 (+ 1 2)) (= 5 5)) the-test-env))
+ (check-true (test-eval '(and (< 1 2) (+ 3 (+ 1 2)) (= 5 5))))
 
- (m-eval '(define x -123) the-test-env)
- (check-true (m-eval '(and (< x 4) (= 5 5) (null? '())) the-test-env)
+ (test-eval '(define x -123))
+ (check-true (test-eval '(and (< x 4) (= 5 5) (null? '())))
              "and should be ok with variables in clauses")
 
  ;; if we defined a procedure "and", we wouldn't get short circuiting, BAD
@@ -576,9 +577,9 @@
   (lambda ()
     (set! n (+ n 1))
     n)) the-test-env)
- (m-eval '(define ctr (counter 0)) the-test-env)
- (check-false (m-eval '(and #f (ctr)) the-test-env))
- (check-equal? 1 (m-eval '(ctr) the-test-env)
+ (test-eval '(define ctr (counter 0)))
+ (check-false (test-eval '(and #f (ctr))))
+ (check-equal? 1 (test-eval '(ctr))
                "and should short-circuit")
  )
 
