@@ -510,14 +510,14 @@
 ;; ==== QUESTION 2 ====
 
 (define (eval-and exp env)
+  (define (eval-and-helper clauses env)
+    (cond ((null? clauses) #t)
+          ((null? (cdr clauses)) (m-eval (car clauses) env))
+          (else (if (m-eval (car clauses) env)
+                    (eval-and-helper (cdr clauses) env)
+                    #f))))
   (eval-and-helper (and-clauses exp) env))
-(define (eval-and-helper clauses env)
-  (cond ((null? clauses) #t)
-        ((null? (cdr clauses)) (m-eval (car clauses) env))
-        (else (if (m-eval (car clauses) env)
-                  (eval-and-helper (cdr clauses) env)
-                  #f)))
-  )
+
 
 (test-case
  "and special form"
@@ -549,7 +549,7 @@
                "and returns *result* of last arg if true")
  (check-false (m-eval '(and (< 1 2) (= 5 5) (> 4 5)) the-test-env)
               "and returns *result* of evaluating last arg if it's #f")
- (check-true (m-eval '(and (< 1 2) (= 5 5)) the-test-env))
+ (check-true (m-eval '(and (< 1 2) (+ 3 (+ 1 2)) (= 5 5)) the-test-env))
 
  (m-eval '(define x -123) the-test-env)
  (check-true (m-eval '(and (< x 4) (= 5 5) (null? '())) the-test-env)
@@ -565,5 +565,10 @@
  (check-equal? 1 (m-eval '(ctr) the-test-env)
                "and should short-circuit")
  )
+
+
+;; ==== QUESTION 3 ====
+
+(define (until->let))
 
 (display "Done running tests.")(newline)
