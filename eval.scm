@@ -117,6 +117,9 @@
         ((variable? exp) (lookup-variable-value exp env))
         ((quoted? exp) (text-of-quotation exp))
         ((assignment? exp) (eval-assignment exp env))
+        ;; ==== QUESTION 4 ====
+        ((unassignment? exp) (eval-unassignment exp env))
+        ;; ==== END QUES 4 ====
         ((definition? exp) (eval-definition exp env))
         ((if? exp) (eval-if exp env))
         ;; ==== QUESTION 2 ====
@@ -230,8 +233,18 @@
 
 
 ; bindings
+
+
+;; ==== QUESTION 4 ====
+
+;; we now store bindings as lists ('binding var vals)
+;; where vals is a list of values the variable has taken
+;; in reverse-chronological order, which we use like a stack
+
+;; rep invariant: vals is never empty
+
 (define (make-binding var val)
-  (list 'binding var val))
+  (list 'binding var (list val)))
 (define (binding? b)
   (tagged-list? b 'binding))
 (define (binding-variable binding)
@@ -240,12 +253,32 @@
       (error "Not a binding: " binding)))
 (define (binding-value binding)
   (if (binding? binding)
-      (third binding)
+      (first (third binding))
       (error "Not a binding: " binding)))
 (define (set-binding-value! binding val)
   (if (binding? binding)
-      (set-car! (cddr binding) val)
+      ;; push new value onto our stack of values
+      (let ((val-stack (third binding)))
+        (set-car! (cddr binding) (cons val val-stack)))
       (error "Not a binding: " binding)))
+(define (unset-binding-value! binding)
+  (if (binding? binding)
+      ;; "pop" value off our stack of values
+      ;; if there are more than 1
+      ;; by moving our pointer to the stack
+      ;; yay garbage collection
+      (let ((val-stack (third binding)))
+        (if (not (null? (cdr val-stack)))
+          (set-car! (cddr binding) (cdr val-stack))))
+      (error "Not a binding: " binding)))
+(define (reset-binding-value! binding val)
+  ;; set binding value and obliterate history (for defines)
+  (if (binding? binding)
+      (set-car! (cddr binding) (list val))
+      (error "Not a binding: " binding)))
+
+;; ==== END QUES 4 ====
+
 
 ; frames
 (define (make-frame variables values)
@@ -336,11 +369,23 @@
         (set-binding-value! binding val)
         (error "Unbound variable -- SET" var))))
 
+;; ==== QUESTION 4 ====
+
+(define (unset-variable-value! var env)
+  (let ((binding (find-in-environment var env)))
+    (if binding
+        (unset-binding-value! binding)
+        (error "Unbound variable -- UNSET" var))))
+
+;; ==== END QUES 4 ====
+
 (define (define-variable! var val env)
   (let ((frame (environment-first-frame env)))
     (let ((binding (find-in-frame var frame)))
       (if binding
-          (set-binding-value! binding val)
+          ;; ==== QUESTION 4 ====
+          (reset-binding-value! binding val)
+          ;; ==== END QUES 4 ====
           (add-binding-to-frame!
            (make-binding var val)
            frame)))))
@@ -507,7 +552,8 @@
 
 ;; ==== QUESTION 4 ====
 
-
+(define (eval-unassignment exp env)
+  (unset-variable-value! (unassignment-variable exp) env))
 
 ;; export all definitions so we can include them in tests
 (provide (all-defined-out))
