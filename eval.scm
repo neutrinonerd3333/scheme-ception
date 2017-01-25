@@ -571,4 +571,41 @@
 
 (define (until->let))
 
+(test-case
+  "until special form"
+  (define the-test-env (setup-environment))
+
+  ;; partitions
+  ;; times loop is run: 0, 1, many
+  ;; number of expressions in body: 0, 1, many
+
+  (m-eval '(define x 0) the-test-env)
+  (m-eval '(define y 0) the-test-env)
+  (m-eval '(define (incr-x) (set! x (+ 1 x))))
+  (m-eval '(define (decr-y) (set! y (- y 1))))
+
+  (check-true (void? (m-eval '(until (< 1 0)) the-test-env))
+              "until has no return value (even with no exprs in body)")
+
+  (check-true (void? (m-eval '(until (>= x 0) (incr-x)) the-test-env))
+              "until has no return value")
+  (check-equal? 0 (m-eval 'x the-test-env)
+                "until should not have run its body")
+
+  (check-true (void? (m-eval '(until (>= x 1) (incr-x)) the-test-env))
+              "until returns void")
+  (check-equal? 1 (m-eval 'x the-test-env)
+                "until should have run exactly once")
+
+  ;; x is currently 1
+
+  ;; multi-expr body
+  (check-true (void? (m-eval '(until (>= x (+ 50 50)) (incr-x) (decr-y)) the-test-env))
+              "until returns void")
+  (check-equal? 100 (m-eval 'x the-test-env')
+                "x should now be 100")
+  (check-equal? -99 (m-eval 'x the-test-env')
+                "y should now be -99")
+  )
+
 (display "Done running tests.")(newline)
