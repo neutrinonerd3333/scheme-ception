@@ -600,11 +600,12 @@
 (test-case
   "until special form"
   (define the-test-env (setup-environment))
+  (define (test-eval exp) (m-eval exp the-test-env))
 
   ;; partitions
   ;; times loop is run: 0, 1, many
   ;; number of expressions in body: 0, 1, many
-  (define (test-eval exp) (m-eval exp the-test-env))
+
   (test-eval '(define x 0))
   (test-eval '(define y 0))
   (test-eval '(define (incr-x) (set! x (+ 1 x))))
@@ -633,5 +634,50 @@
   (check-equal? -99 (test-eval 'y)
                 "y should now be -99")
   )
+
+
+
+;; ==== QUESTION 4 ====
+
+(test-case
+  "unset! special form"
+  (define test-env (setup-environment))
+  (define (test-eval exp) (m-eval exp test-env))
+
+  ;; partitions
+  ;; # times set! called: 0, 1, many
+  ;; unset - set: -, 0, +
+  ;; location of unset binding: global env, subenv
+
+  (check-exn exn:fail? (test-eval '(unset! i-am-not-defined))
+             "unset! should fail on undefined variables")
+
+  (test-eval '(define x 1337))
+  (test-eval '(unset! x))
+  (check-equal 1337 (test-eval 'x)
+    "unset! is idempotent on unmutated variables")
+
+  (test-eval '(define x (quote asian-dance-team)))
+  (test-eval '(unset! x))
+  (check-equal 'asian-dance-team (test-eval 'x)
+    "unset! cannot look past a define")
+
+  (test-eval '(set! x 83))
+  (test-eval '(set! x 89))
+  (test-eval '(unset! x))
+  (check-equal 83 (test-eval 'x)
+    "unset! undoes last not-undone set!")
+
+  (test-eval '(set! x 101))
+  (test-eval '(unset! x))
+  (check-equal 83 (test-eval 'x)
+    "unset! undoes last not-undone set! (not necessarily lest set!)")
+
+  (test-eval '(define f (lambda (t) (lambda () (set! t 131) (unset! t) t))))
+  (check-equal 405 (test-eval '((f 405)))
+    "unset! should work in not-global environements")
+  )
+
+
 
 (display "Done running tests.")(newline)
