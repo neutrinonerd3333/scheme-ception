@@ -185,7 +185,8 @@
   ;; unset - set: -, 0, +
   ;; location of unset binding: global env, subenv
 
-  (check-exn exn:fail? (test-eval '(unset! i-am-not-defined))
+  (check-exn exn:fail?
+             (lambda () (test-eval '(unset! i-am-not-defined)))
              "unset! should fail on undefined variables")
 
   (test-eval '(define x 1337))
