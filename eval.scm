@@ -128,6 +128,10 @@
         ;; ==== QUESTION 3 ====
         ((until? exp) (m-eval (until->let exp) env))
         ;; ==== END QUES 3 ====
+        ;; ==== QUESTION 5 ====
+        ((current-env-query? exp) (eval-current-env exp env))
+        ((proc-env-query? exp) (eval-procedure-env exp env))
+        ;; ==== END QUES 5 ====
         ((lambda? exp)
          (make-procedure (lambda-parameters exp) (lambda-body exp) env))
         ((begin? exp) (eval-sequence (begin-actions exp) env))
@@ -390,6 +394,35 @@
            (make-binding var val)
            frame)))))
 
+
+;; ==== QUESTION 5 ====
+;; we define these procedures here
+;; so they can be referenced in the following list of primitives
+
+;; "external-env" refers to the view we give callers of (current-env)
+(define (env-variables external-env)
+  (frame-variables (environment-first-frame (unbox external-env))))
+;; safe from rep exposure because frame-variables calls mmap
+;; whose return value doesn't point to the list passed into it
+
+(define (env-parent external-env)
+  (let ((encl-env (enclosing-environment (unbox external-env))))
+    (if (eq? the-empty-environment encl-env)
+        (error "Global environment has no parent environment")
+        (box-immutable encl-env))))
+
+;; yes, this is copy-pasted from lookup-variable-value.
+;; the morally correct way would be to call that with an exception handler
+;; but that behavior is hard to implement :(
+(define (env-value var external-env)
+  (let ((env (unbox external-env)))
+    (let ((binding (find-in-environment var env)))
+      (if binding
+          (binding-value binding)
+          #f))))
+
+;; ==== END QUES 5 ====
+
 ; primitives procedures - hooks to underlying Scheme procs
 (define (make-primitive-procedure implementation)
   (list 'primitive implementation))
@@ -428,6 +461,11 @@
         (list 'rest rest)
         (list 'void void)
         ; ... more primitives
+
+        ;; ==== QUESTION 5 ====
+        (list 'env-variables env-variables)
+        (list 'env-parent env-parent)
+        (list 'env-value env-value)
         ))
 
 (define (primitive-procedure-names) (mmap car (primitive-procedures)))
@@ -521,8 +559,11 @@
 ;;    This code protected from bugs by code Buddha
 ;;
 
+
+;; see tests for example usage of everything
+
 ;; ==== QUESTION 1 ====
-;; see tests
+;; see tests for example usage
 
 
 ;; ==== QUESTION 2 ====
@@ -550,12 +591,23 @@
           (begin ,@(until-exps exp) (,loop-sym))))
      (,loop-sym)))
 
+
 ;; ==== QUESTION 4 ====
 
 (define (eval-unassignment exp env)
   (unset-variable-value! (unassignment-variable exp) env))
 
+
+;; ==== QUESTION 5 ====
+
+(define (current-env-query? exp) (tagged-list? exp 'current-env))
+(define (proc-env-query? exp) (tagged-list? exp 'procedure-env))
+(define proc-env-query-proc second)
+(define (eval-current-env exp env) (box-immutable env))
+(define (eval-procedure-env exp env)
+  (box-immutable (procedure-environment (m-eval (proc-env-query-proc exp) env))))
+
+
+
 ;; export all definitions so we can include them in tests
 (provide (all-defined-out))
-
-
