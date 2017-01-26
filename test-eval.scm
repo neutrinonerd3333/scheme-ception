@@ -341,10 +341,16 @@
     )
 ))
 
+
+;; these are the vanilla tests running in m-eval
 (define test-env (setup-environment))
 (define (single-depth-test-eval exp) (m-eval exp test-env))
 (define single-depth-suite
   (test-suite-with single-depth-test-eval "single-depth tests"))
+
+;; ==== QUESTION 6 ====
+;; these tests run the same commands as before, except one level deeper
+;; *cue "Inception" boom*
 
 (load-meval-defs)
 (m-eval '(define second-level-env (setup-environment)) the-global-environment)
