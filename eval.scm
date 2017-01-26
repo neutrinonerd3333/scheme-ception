@@ -448,18 +448,42 @@
         (list '/ /)
         (list '>= >=)
         (list '<= <=)
+
+        (list 'eq? eq?)
+        (list 'equal? equal?)
+
         (list 'list list)
+
         (list 'cadr cadr)
+        (list 'caadr caadr)
+        (list 'cdadr cdadr)
         (list 'cddr cddr)
-        (list 'newline newline)
-        (list 'printf printf)
-        (list 'length length)
+        (list 'caddr caddr)
+        (list 'cadddr cadddr)
+
         (list 'first first)
         (list 'second second)
         (list 'third third)
         (list 'fourth fourth)
         (list 'rest rest)
+
+        (list 'length length)
+        (list 'append append)
+
+        (list 'number? number?)
+        (list 'string? string?)
+        (list 'boolean? boolean?)
+        (list 'symbol? symbol?)
+        (list 'pair? pair?)
+
         (list 'void void)
+        (list 'gensym gensym)
+
+        (list 'box-immutable box-immutable)
+        (list 'unbox unbox)
+
+        (list 'newline newline)
+        (list 'printf printf)
         ; ... more primitives
 
         ;; ==== QUESTION 5 ====
