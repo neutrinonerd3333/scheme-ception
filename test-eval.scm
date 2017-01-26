@@ -215,4 +215,88 @@
     "unset! should work in not-global environements")
   )
 
+
+;; ==== QUESTION 5 ====
+
+(test-case
+  "environments"
+
+  (define test-env (setup-environment))
+  (define (test-eval exp) (m-eval exp test-env))
+
+  (test-eval '(define get-empty-env
+             (lambda () (current-env))))
+  (test-eval '(define get-one-elt-env
+             (lambda ()
+                     (let ((i-am-a-variable 37))
+                          (current-env)))))
+
+  (test-eval '(define make-counter
+                      (lambda (init)
+                              (lambda ()
+                                      (set! init (+ init 1))
+                                      init))))
+  (test-eval '(define my-counter (make-counter 0)))
+
+  ;; env-variables argument partitions
+  ;; environment: global, not
+  ;; # variables: 0, 1, many
+  (check-equal? '()
+                (test-eval '(get-empty-env))
+                "there should be no variables defined")
+  (check-equal? '(i-am-a-variable)
+                (test-eval '(get-one-elt-env))
+                "there should be one variable defined")
+  (check-not-false (member 'car (test-eval '(current-env)))
+                   "global env should contain bindings for primitives")
+  (check-equal? '(init)
+                (test-eval '(procedure-env my-counter))
+                "check procedure env")
+
+
+  ;; env-parent argument artitions
+  ;; environment: empty, global, sub-global
+
+  (check-equal? (test-eval '(current-env))
+                (test-eval '(get-empty-env))
+                "parent of sub-environment of global env is global env")
+  (check-equal? '()
+                (test-eval '(env-variables (env-parent (current-env))))
+                "empty env (parent of global env) is empty")
+  (check-exn exn:fail?
+             (lambda ()
+                     (test-eval '(env-parent (env-parent (current-env)))))
+             "empty env (parent of global env) has no parent") ;; like batman
+
+
+  ;; env-value argument partitions
+  ;; environment: empty, global, sub-global
+  ;; number of bindings in top-frame of env: 0, 1, many
+  ;; symbol is bound? #t/#f
+  ;; binding type: primitive or not
+  ;; binding location: top frame, sub-frames
+
+  ;; empty env, 0 bindings, unbound symbol
+  (check-false (test-eval '(env-value (env-parent (current-env))
+                                      (quote i-am-not-bound))
+               "env-value returns false for unbound symbols")
+
+  ;; global env, many bindings, bound symbol, is primitive
+  (check-equal? (test-eval '(cdr))
+                (test-eval '(env-value (current-env) (quote cdr)))
+                "primitives are bound in the global env")
+
+  ;; sub-global env, 1 binding, bound symbol, not primitive
+  (check-equal? 37
+                (test-eval '(env-value (get-one-elt-env)
+                                       (quote i-am-a-variable)))
+                "bindings in non-global envs")
+
+  ;; sub-global env, 1 binding, bound symbol, primitive, not-top frame
+  (check-equal? (test-eval '(list))
+                (test-eval '(env-value (get-one-elt-env) (quote list)))
+                "env-value can access bindings not in top-most frame")
+  )
+
+
 (display "Done running tests.")(newline)
