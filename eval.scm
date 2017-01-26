@@ -1,4 +1,6 @@
 #lang racket
+(provide (all-defined-out)) ;; export all defs
+;; so we can include them in tests
 ;;
 ;; eval.scm - 6.037
 ;;
@@ -553,6 +555,7 @@
   ;; Open this file for reading
   (let ((stream (open-input-file (this-expression-file-name))))
     (read-line stream) ;; strip off "#lang racket" line
+    (read-line stream) ;; strip off "provide" line
     (repl stream))     ;; feed the rest of the definitions into meval
 
   ;; Update the meval-depth variable inside the environment we're simulating
@@ -633,5 +636,3 @@
 
 
 
-;; export all definitions so we can include them in tests
-(provide (all-defined-out))
