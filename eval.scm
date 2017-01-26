@@ -162,10 +162,13 @@
                     (list-of-values (rest-operands exps) env)))))
 
 (define (eval-if exp env)
-  (if (m-eval (if-predicate exp) env)
-      (m-eval (if-consequent exp) env)
-      (m-eval (if-alternative exp) env)
-      ))
+  (let ((len (length exp)))
+    (cond ((= len 3) (if (m-eval (if-predicate exp) env)
+                         (m-eval (if-consequent exp) env)))
+          ((= len 4) (if (m-eval (if-predicate exp) env)
+                         (m-eval (if-consequent exp) env)
+                         (m-eval (if-alternative exp) env)))
+          (else (error "Wrong number of args to IF" len)))))
 
 (define (eval-sequence exps env)
   (cond ((last-exp? exps) (m-eval (first-exp exps) env))
@@ -610,13 +613,22 @@
 (define until-exps cddr)
 (define until-test cadr)
 (define (until->let exp)
-  (define loop-sym (gensym))
-  `(let ()
-     (define (,loop-sym)
-      (if ,(until-test exp)
-          (void)
-          (begin ,@(until-exps exp) (,loop-sym))))
-     (,loop-sym)))
+  (let ((loop-sym (gensym)))
+    (list 'let '()
+      (list 'define (list loop-sym)
+        (list 'if (until-test exp)
+                  (list 'void)
+                  (append '(begin) (until-exps exp) (list (list loop-sym)))))
+      (list loop-sym))
+
+    ; ^^ expanded version of the following quasiquote:
+    ; `(let ()
+    ;    (define (,loop-sym)
+    ;     (if ,(until-test exp)
+    ;         (void)
+    ;         (begin ,@(until-exps exp) (,loop-sym))))
+    ;    (,loop-sym))
+    ))
 
 
 ;; ==== QUESTION 4 ====
