@@ -647,4 +647,14 @@
   (box-immutable (procedure-environment (m-eval (proc-env-query-proc exp) env))))
 
 
+;; ==== QUESTION 6 ====
+;; we use the following fib function
+;; (define (fib n) (if (<= n 1) n (+ (fib (- n 1)) (fib (- n 2)))))
 
+;; depth   real time from (time (fib 8))
+;; 0       0
+;; 1       2
+;; 2       4539
+;; 3       lol no
+;;         (time (+ 1 2)) gives a real time of 5083
+;;         gg
